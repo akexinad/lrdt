@@ -7,6 +7,7 @@ import {
     InputType,
     Mutation,
     ObjectType,
+    Query,
     Resolver
 } from "type-graphql";
 import { User } from "../entites/User";
@@ -39,6 +40,17 @@ class UserResponse {
 
 @Resolver()
 export class UserResolver {
+    @Query(() => User, { nullable: true })
+    async me(@Ctx() ctx: MyContext): Promise<User | null> {
+        const userId = ctx.req.session.userId;
+
+        if (!userId) return null;
+
+        const user = await ctx.em.findOne(User, { id: userId });
+
+        return user;
+    }
+
     @Mutation(() => UserResponse)
     async register(
         @Arg("options") options: UsernamePasswordInput,
@@ -90,6 +102,9 @@ export class UserResolver {
 
         await ctx.em.persistAndFlush(user);
 
+        // auto login after register
+        ctx.req.session.userId = user.id;
+
         return {
             user
         };
@@ -130,6 +145,10 @@ export class UserResolver {
                 ]
             };
         }
+
+        ctx.req.session.userId = userExists.id;
+
+        console.log("ctx.req.session.userId", ctx.req.session.userId);
 
         return {
             user: userExists
