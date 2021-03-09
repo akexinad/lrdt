@@ -24,6 +24,7 @@
     "@mikro-orm/core": "^4.4.4",
     "@mikro-orm/migrations": "^4.4.4",
     "@mikro-orm/postgresql": "^4.4.4",
+    "apollo-server-express": "^2.21.1",
     "graphql": "^15.5.0",
     "pg": "^8.5.1",
     "type-graphql": "^1.1.1"
