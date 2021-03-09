@@ -39,21 +39,60 @@ class UserResponse {
 
 @Resolver()
 export class UserResolver {
-    @Mutation(() => User)
+    @Mutation(() => UserResponse)
     async register(
         @Arg("options") options: UsernamePasswordInput,
         @Ctx() ctx: MyContext
-    ): Promise<User> {
+    ): Promise<UserResponse> {
+        const userExists = await ctx.em.findOne(User, {
+            username: options.username.toLowerCase()
+        });
+
+        if (userExists) {
+            return {
+                errors: [
+                    {
+                        field: "Username",
+                        message: "Username already taken"
+                    }
+                ]
+            };
+        }
+
+        if (options.username.length < 6) {
+            return {
+                errors: [
+                    {
+                        field: "Username",
+                        message: "Username must be at least six characters"
+                    }
+                ]
+            };
+        }
+
+        if (options.password.length < 6) {
+            return {
+                errors: [
+                    {
+                        field: "Password",
+                        message: "Password must be at least six characters"
+                    }
+                ]
+            };
+        }
+
         const hashedPass = await argon2.hash(options.password);
 
         const user = ctx.em.create(User, {
-            username: options.username,
+            username: options.username.toLowerCase(),
             password: hashedPass
         });
 
         await ctx.em.persistAndFlush(user);
 
-        return user;
+        return {
+            user
+        };
     }
 
     @Mutation(() => UserResponse)
