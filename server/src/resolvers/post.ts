@@ -1,6 +1,6 @@
-import { Post } from "../entites/Post";
 import { MyContext } from "src/types";
 import { Arg, Ctx, Int, Mutation, Query, Resolver } from "type-graphql";
+import { Post } from "../entites/Post";
 
 @Resolver()
 export class PostResolver {
@@ -60,7 +60,7 @@ export class PostResolver {
         }
 
         await ctx.em.nativeDelete(Post, { id: postToDelete.id });
-        
+
         return true;
     }
 }
