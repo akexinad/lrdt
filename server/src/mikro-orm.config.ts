@@ -8,9 +8,7 @@ export default {
     dbName: "lrdt",
     type: "postgresql",
     user: DB_USER,
-    // user: "postgres",
     password: DB_PASS,
-    // password: "psql1234",
     // remove debug option when in production
     debug: !__prod__,
     entities: [Post],
