@@ -148,8 +148,6 @@ export class UserResolver {
 
         ctx.req.session.userId = userExists.id;
 
-        console.log("ctx.req.session.userId", ctx.req.session.userId);
-
         return {
             user: userExists
         };

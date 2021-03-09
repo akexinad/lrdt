@@ -1,0 +1,18 @@
+HOW SESSIONS WORK
+=================
+
+- When you store objects into the req.session object, it takes that object and store it into redis.
+- Redis is a key-value store. The cookie that you store will look something like this:
+    - "sess:SmGojfw4DO9Ayx-WI-2zl_KSx520sDnq"
+- Which will map to the object you stored:
+    - { userId: 44 }
+
+- Then the express-session will set a cookie on the browser. You can see it in the application tab in your chrome dev tools as:
+    - qid: s%3ASmGojfw4DO9Ayx-WI-2zl_KSx520sDnq.smmDpR6h4sdccDy%2BrAd%2BQ5Nd5%2B03dFeDc4VdrI9e174
+
+- This is a signed version of your redis value. "qid" is the name you gave to the session-cookie in the options (See index.ts file).
+
+- So when a user makes a request, the qid gets sent to the server, and UNSIGNS it using your secret:
+    - qid: s%3ASmGojfw4DO9Ayx-WI-2zl_KSx520sDnq.smmDpR6h4sdccDy%2BrAd%2BQ5Nd5%2B03dFeDc4VdrI9e174 ==> SECRET ==> sess:SmGojfw4DO9Ayx-WI-2zl_KSx520sDnq
+
+- Finally it makes a request to redis to see if this key-value pair exists, and stores the { userId: 44 } object in request.session.
