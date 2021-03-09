@@ -2,14 +2,15 @@ import { MikroORM } from "@mikro-orm/core";
 import path from "path";
 import { __prod__ } from "./constants";
 import { Post } from "./entites/Post";
+import { DB_PASS, DB_USER } from "./priv";
 
 export default {
     dbName: "lrdt",
     type: "postgresql",
-    // user: process.env.DB_USER,
-    user: "postgres",
-    // password: process.env.DB_PASS,
-    password: "psql1234",
+    user: DB_USER,
+    // user: "postgres",
+    password: DB_PASS,
+    // password: "psql1234",
     // remove debug option when in production
     debug: !__prod__,
     entities: [Post],
