@@ -11,7 +11,7 @@ type InputFieldProps = InputHTMLAttributes<HTMLInputElement> & {
     name: string;
     label: string;
     placeholder: string;
-    type: string;
+    type?: string;
 };
 
 export const InputField: FC<InputFieldProps> = (props) => {
