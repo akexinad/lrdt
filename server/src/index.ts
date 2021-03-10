@@ -16,6 +16,8 @@ import { HelloResolver } from "./resolvers/hello";
 import { PostResolver } from "./resolvers/post";
 import { UserResolver } from "./resolvers/user";
 
+import cors from "cors";
+
 const main = async () => {
     const orm = await MikroORM.init(mikroOrmConfig);
 
@@ -27,10 +29,17 @@ const main = async () => {
     /**
      * The order of the middleware is important.
      *
-     * Weneed to access the session before the apollo server.
+     * We need to access the session before the apollo server.
      */
     const RedisStore = connectRedis(session);
     const redisClient = redis.createClient();
+
+    app.use(
+        cors({
+            origin: "http://localhost:3000",
+            credentials: true
+        })
+    );
 
     app.use(
         session({
@@ -63,7 +72,15 @@ const main = async () => {
         })
     });
 
-    apolloServer.applyMiddleware({ app });
+    apolloServer.applyMiddleware({
+        app,
+        /**
+         * You can use apollo to add cors policy,
+         * but here we will use the cors package
+         */
+        cors: false
+        // cors: { origin: "http://localhost:3000" }
+    });
 
     app.listen(5000, () => {
         console.log("listening on http://localhost:5000/graphql");
