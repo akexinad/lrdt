@@ -64,7 +64,7 @@ export class UserResolver {
             return {
                 errors: [
                     {
-                        field: "Username",
+                        field: "username",
                         message: "Username already taken"
                     }
                 ]
@@ -75,7 +75,7 @@ export class UserResolver {
             return {
                 errors: [
                     {
-                        field: "Username",
+                        field: "username",
                         message: "Username must be at least six characters"
                     }
                 ]
@@ -86,7 +86,7 @@ export class UserResolver {
             return {
                 errors: [
                     {
-                        field: "Password",
+                        field: "password",
                         message: "Password must be at least six characters"
                     }
                 ]
