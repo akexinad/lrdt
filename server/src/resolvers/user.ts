@@ -123,7 +123,7 @@ export class UserResolver {
             return {
                 errors: [
                     {
-                        field: "Username",
+                        field: "username",
                         message: "Invalid login"
                     }
                 ]
@@ -139,7 +139,7 @@ export class UserResolver {
             return {
                 errors: [
                     {
-                        field: "Password",
+                        field: "password",
                         message: "Invalid login"
                     }
                 ]
