@@ -3,3 +3,9 @@
 - So what I had to do was copy paste the package.json and run `npm i --legacy-peer-deps` to fix the legacy peer dependencies.
 
 - Any file in the pages folder automatically becomes a route.
+
+
+SERVER SIDE RENDERING (SSR)
+===========================
+
+- Me => browse http://localhost:3000 => next.js server => request to graphql server at http://localhost:5000/graphql => building the HTML => then it sends it back to the client.
