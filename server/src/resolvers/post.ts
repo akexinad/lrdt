@@ -14,6 +14,7 @@ export class PostResolver {
 
     @Query(() => [Post])
     posts(@Ctx() ctx: MyContext): Promise<Post[]> {
+        // await sleep(3000);
         return ctx.em.find(Post, {});
     }
 
@@ -63,4 +64,7 @@ export class PostResolver {
 
         return true;
     }
+}
+function sleep(arg0: number) {
+    throw new Error("Function not implemented.");
 }
