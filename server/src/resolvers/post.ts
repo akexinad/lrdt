@@ -65,6 +65,3 @@ export class PostResolver {
         return true;
     }
 }
-function sleep(arg0: number) {
-    throw new Error("Function not implemented.");
-}
