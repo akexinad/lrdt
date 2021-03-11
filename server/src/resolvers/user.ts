@@ -1,4 +1,5 @@
 import argon2 from "argon2";
+import { COOKIE_NAME } from "../constants";
 import { MyContext } from "src/types";
 import {
     Arg,
@@ -151,5 +152,20 @@ export class UserResolver {
         return {
             user: userExists
         };
+    }
+
+    @Mutation(() => Boolean)
+    logout(@Ctx() ctx: MyContext): Promise<boolean> {
+        return new Promise((res) =>
+            ctx.req.session.destroy((err) => {
+                if (err) {
+                    console.log(err);
+                    return res(false);
+                }
+
+                ctx.res.clearCookie(COOKIE_NAME);
+                res(true);
+            })
+        );
     }
 }

@@ -2,7 +2,13 @@ import { ChakraProvider, ColorModeProvider } from "@chakra-ui/react";
 import { Cache, cacheExchange, QueryInput } from "@urql/exchange-graphcache";
 import { createClient, dedupExchange, fetchExchange, Provider } from "urql";
 import theme from "../../theme";
-import { LoginMutation, MeDocument, MeQuery, RegisterMutation } from "../generated/graphql";
+import {
+    LoginMutation,
+    LogoutMutation,
+    MeDocument,
+    MeQuery,
+    RegisterMutation
+} from "../generated/graphql";
 
 /**
  * This is just a helper function to make it easier to cast the types.
@@ -27,35 +33,47 @@ const client = createClient({
         cacheExchange({
             updates: {
                 Mutation: {
-                    login: (_result, _, cache, __) => {
+                    login: (result, _, cache, __) => {
                         betterUpdateQuery<LoginMutation, MeQuery>(
                             cache,
                             { query: MeDocument },
-                            _result,
-                            (result, query) => {
-                                if (result.login.errors) {
+                            result,
+                            (_result, query) => {
+                                if (_result.login.errors) {
                                     return query;
                                 } else {
                                     return {
-                                        me: result.login.user
+                                        me: _result.login.user
                                     };
                                 }
                             }
                         );
                     },
-                    register: (_result, _, cache, __) => {
+                    register: (result, _, cache, __) => {
                         betterUpdateQuery<RegisterMutation, MeQuery>(
                             cache,
                             { query: MeDocument },
-                            _result,
-                            (result, query) => {
-                                if (result.register.errors) {
+                            result,
+                            (_result, query) => {
+                                if (_result.register.errors) {
                                     return query;
                                 } else {
                                     return {
-                                        me: result.register.user
+                                        me: _result.register.user
                                     };
                                 }
+                            }
+                        );
+                    },
+                    logout: (result, _, cache, __) => {
+                        betterUpdateQuery<LogoutMutation, MeQuery>(
+                            cache,
+                            { query: MeDocument },
+                            result,
+                            () => {
+                                return {
+                                    me: null
+                                };
                             }
                         );
                     }
