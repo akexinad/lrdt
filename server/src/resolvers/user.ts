@@ -1,6 +1,4 @@
 import argon2 from "argon2";
-import { MyContext } from "../types";
-import { sendEmail } from "../utils/sendEmail";
 import {
     Arg,
     Ctx,
@@ -10,12 +8,14 @@ import {
     Query,
     Resolver
 } from "type-graphql";
+import { getConnection, InsertResult } from "typeorm";
+import { v4 } from "uuid";
 import { COOKIE_NAME, FORGET_PASSWORD_PREFIX } from "../constants";
 import { User } from "../entites/User";
+import { MyContext } from "../types";
+import { sendEmail } from "../utils/sendEmail";
 import { validateRegister } from "../utils/validateRegister";
 import { UsernamePasswordEmailInput } from "./usernamePasswordEmailInput";
-
-import { v4 } from "uuid";
 
 @ObjectType()
 class FieldError {
@@ -69,7 +69,7 @@ export class UserResolver {
             };
         }
 
-        const userWithNewPassword = await ctx.em.findOne(User, { id: +userId });
+        const userWithNewPassword = await User.findOne(+userId);
 
         if (!userWithNewPassword) {
             return {
@@ -82,9 +82,9 @@ export class UserResolver {
             };
         }
 
-        userWithNewPassword.password = await argon2.hash(newPassword);
+        const newHashedPassword = await argon2.hash(newPassword);
 
-        await ctx.em.persistAndFlush(userWithNewPassword);
+        User.update({ id: +userId }, { password: newHashedPassword });
 
         // disable change password once password was changed successfully.
         ctx.redis.del(key);
@@ -102,7 +102,11 @@ export class UserResolver {
         @Arg("email") email: string,
         @Ctx() ctx: MyContext
     ): Promise<boolean> {
-        const user = await ctx.em.findOne(User, { email });
+        const user = await User.findOne({
+            where: {
+                email
+            }
+        });
 
         if (!user) {
             /**
@@ -133,14 +137,12 @@ export class UserResolver {
 
     // ME QUERY
     @Query(() => User, { nullable: true })
-    async me(@Ctx() ctx: MyContext): Promise<User | null> {
+    async me(@Ctx() ctx: MyContext): Promise<User | undefined> {
         const userId = ctx.req.session.userId;
 
-        if (!userId) return null;
+        if (!userId) return undefined;
 
-        const user = await ctx.em.findOne(User, { id: userId });
-
-        return user;
+        return User.findOne(userId);
     }
 
     // REGISTER MUTATION
@@ -149,8 +151,10 @@ export class UserResolver {
         @Arg("options") options: UsernamePasswordEmailInput,
         @Ctx() ctx: MyContext
     ): Promise<UserResponse> {
-        const userNameExists = await ctx.em.findOne(User, {
-            username: options.username.toLowerCase()
+        const userNameExists = await User.findOne({
+            where: {
+                username: options.username.toLowerCase()
+            }
         });
 
         if (userNameExists) {
@@ -164,8 +168,10 @@ export class UserResolver {
             };
         }
 
-        const emailAlreadyInUse = await ctx.em.findOne(User, {
-            email: options.email.toLowerCase()
+        const emailAlreadyInUse = await User.findOne({
+            where: {
+                email: options.email.toLowerCase()
+            }
         });
 
         if (emailAlreadyInUse) {
@@ -189,13 +195,19 @@ export class UserResolver {
 
         const hashedPass = await argon2.hash(options.password);
 
-        const user = ctx.em.create(User, {
-            username: options.username.toLowerCase(),
-            email: options.email,
-            password: hashedPass
-        });
+        const result: InsertResult = await getConnection()
+            .createQueryBuilder()
+            .insert()
+            .into(User)
+            .values({
+                username: options.username,
+                email: options.email,
+                password: hashedPass
+            })
+            .returning("*")
+            .execute();
 
-        await ctx.em.persistAndFlush(user);
+        const user: User = result.raw[0];
 
         // auto login after register
         ctx.req.session.userId = user.id;
@@ -212,11 +224,10 @@ export class UserResolver {
         @Ctx() ctx: MyContext
     ): Promise<UserResponse> {
         // just a quick and dirty validation to check if user passes username or email.
-        const userExists = await ctx.em.findOne(
-            User,
+        const userExists = await User.findOne(
             userNameOrEmail.includes("@")
-                ? { email: userNameOrEmail }
-                : { username: userNameOrEmail }
+                ? { where: { email: userNameOrEmail } }
+                : { where: { username: userNameOrEmail } }
         );
 
         if (!userExists) {

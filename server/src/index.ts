@@ -1,27 +1,30 @@
-import { MikroORM } from "@mikro-orm/core";
 import { ApolloServer } from "apollo-server-express";
 import connectRedis from "connect-redis";
 import cors from "cors";
 import express from "express";
 import session from "express-session";
 import Redis from "ioredis";
-// Package required for type graphql to work.
-import "reflect-metadata";
+import "reflect-metadata"; // Package required for type-graphql and type-orm to work.
 import { buildSchema } from "type-graphql";
+import { createConnection } from "typeorm";
 import { COOKIE_NAME, __prod__ } from "./constants";
-import mikroOrmConfig from "./mikro-orm.config";
-import { SESSION_COOKIE } from "./priv";
+import { Post } from "./entites/Post";
+import { User } from "./entites/User";
+import { DB_PASS, DB_USER, SESSION_COOKIE } from "./priv";
 import { HelloResolver } from "./resolvers/hello";
 import { PostResolver } from "./resolvers/post";
 import { UserResolver } from "./resolvers/user";
 
 const main = async () => {
-    // sendEmail("danixeka@gmail.com", "hello");
-
-    const orm = await MikroORM.init(mikroOrmConfig);
-
-    // automatically run the migrations
-    await orm.getMigrator().up();
+    await createConnection({
+        type: "postgres",
+        database: "lrdt",
+        username: DB_USER,
+        password: DB_PASS,
+        logging: true,
+        synchronize: true,
+        entities: [Post, User]
+    });
 
     const app = express();
 
@@ -31,9 +34,7 @@ const main = async () => {
      * We need to access the session before the apollo server.
      */
     const RedisStore = connectRedis(session);
-    const redis = Redis();
-
-
+    const redis = new Redis();
 
     app.use(
         cors({
@@ -67,7 +68,6 @@ const main = async () => {
             validate: false
         }),
         context: ({ req, res }) => ({
-            em: orm.em,
             req,
             res,
             redis
