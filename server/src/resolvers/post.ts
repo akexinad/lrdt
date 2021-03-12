@@ -1,3 +1,4 @@
+import { isAuth } from "../middleware/isAuth";
 import { MyContext } from "src/types";
 import {
     Arg,
@@ -35,6 +36,7 @@ export class PostResolver {
     }
 
     @Mutation(() => Post)
+    @UseMiddleware(isAuth) // check if user is authenticated
     async createPost(
         @Arg("options", () => PostInput) options: PostInput,
         @Ctx() ctx: MyContext
