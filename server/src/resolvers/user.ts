@@ -1,25 +1,21 @@
 import argon2 from "argon2";
-import { COOKIE_NAME } from "../constants";
-import { MyContext } from "src/types";
+import { MyContext } from "../types";
+import { sendEmail } from "../utils/sendEmail";
 import {
     Arg,
     Ctx,
     Field,
-    InputType,
     Mutation,
     ObjectType,
     Query,
     Resolver
 } from "type-graphql";
+import { COOKIE_NAME, FORGET_PASSWORD_PREFIX } from "../constants";
 import { User } from "../entites/User";
+import { validateRegister } from "../utils/validateRegister";
+import { UsernamePasswordEmailInput } from "./usernamePasswordEmailInput";
 
-@InputType()
-class UsernamePasswordInput {
-    @Field()
-    username: string;
-    @Field()
-    password: string;
-}
+import { v4 } from "uuid";
 
 @ObjectType()
 class FieldError {
@@ -41,6 +37,101 @@ class UserResponse {
 
 @Resolver()
 export class UserResolver {
+    @Mutation(() => UserResponse)
+    async changePassword(
+        @Arg("token") token: string,
+        @Arg("newPassword") newPassword: string,
+        @Ctx() ctx: MyContext
+    ): Promise<UserResponse> {
+        if (newPassword.length < 6) {
+            return {
+                errors: [
+                    {
+                        field: "newPassword",
+                        message: "Password must be at least six characters"
+                    }
+                ]
+            };
+        }
+
+        const key = FORGET_PASSWORD_PREFIX + token;
+
+        const userId = await ctx.redis.get(key);
+
+        if (!userId) {
+            return {
+                errors: [
+                    {
+                        field: "token",
+                        message: "Token Expired"
+                    }
+                ]
+            };
+        }
+
+        const userWithNewPassword = await ctx.em.findOne(User, { id: +userId });
+
+        if (!userWithNewPassword) {
+            return {
+                errors: [
+                    {
+                        field: "token",
+                        message: "User no longer exists"
+                    }
+                ]
+            };
+        }
+
+        userWithNewPassword.password = await argon2.hash(newPassword);
+
+        await ctx.em.persistAndFlush(userWithNewPassword);
+
+        // disable change password once password was changed successfully.
+        ctx.redis.del(key);
+
+        ctx.req.session.userId = userWithNewPassword.id;
+
+        return {
+            user: userWithNewPassword
+        };
+    }
+
+    // FORGOT PASSWORD MUTATION
+    @Mutation(() => Boolean)
+    async forgotPassword(
+        @Arg("email") email: string,
+        @Ctx() ctx: MyContext
+    ): Promise<boolean> {
+        const user = await ctx.em.findOne(User, { email });
+
+        if (!user) {
+            /**
+             * For security reasons, it's a good idea to return true
+             * to deter malicious fishing through your users for a
+             * vulnerable email.
+             */
+            return true;
+        }
+
+        const token = v4();
+
+        await ctx.redis.set(
+            FORGET_PASSWORD_PREFIX + token,
+            user.id,
+            "ex",
+            // 3 days
+            1000 * 60 * 60 * 24 * 3
+        );
+
+        await sendEmail(
+            email,
+            `<a href="http://localhost:3000/change-password/${token}">Reset Password</a>`
+        );
+
+        return true;
+    }
+
+    // ME QUERY
     @Query(() => User, { nullable: true })
     async me(@Ctx() ctx: MyContext): Promise<User | null> {
         const userId = ctx.req.session.userId;
@@ -52,16 +143,17 @@ export class UserResolver {
         return user;
     }
 
+    // REGISTER MUTATION
     @Mutation(() => UserResponse)
     async register(
-        @Arg("options") options: UsernamePasswordInput,
+        @Arg("options") options: UsernamePasswordEmailInput,
         @Ctx() ctx: MyContext
     ): Promise<UserResponse> {
-        const userExists = await ctx.em.findOne(User, {
+        const userNameExists = await ctx.em.findOne(User, {
             username: options.username.toLowerCase()
         });
 
-        if (userExists) {
+        if (userNameExists) {
             return {
                 errors: [
                     {
@@ -72,25 +164,26 @@ export class UserResolver {
             };
         }
 
-        if (options.username.length < 6) {
+        const emailAlreadyInUse = await ctx.em.findOne(User, {
+            email: options.email.toLowerCase()
+        });
+
+        if (emailAlreadyInUse) {
             return {
                 errors: [
                     {
-                        field: "username",
-                        message: "Username must be at least six characters"
+                        field: "email",
+                        message: "Email already in use"
                     }
                 ]
             };
         }
 
-        if (options.password.length < 6) {
+        const validationErrors = validateRegister(options);
+
+        if (validationErrors) {
             return {
-                errors: [
-                    {
-                        field: "password",
-                        message: "Password must be at least six characters"
-                    }
-                ]
+                errors: validationErrors
             };
         }
 
@@ -98,6 +191,7 @@ export class UserResolver {
 
         const user = ctx.em.create(User, {
             username: options.username.toLowerCase(),
+            email: options.email,
             password: hashedPass
         });
 
@@ -113,28 +207,30 @@ export class UserResolver {
 
     @Mutation(() => UserResponse)
     async login(
-        @Arg("options") options: UsernamePasswordInput,
+        @Arg("userNameOrEmail") userNameOrEmail: string,
+        @Arg("password") password: string,
         @Ctx() ctx: MyContext
     ): Promise<UserResponse> {
-        const userExists = await ctx.em.findOne(User, {
-            username: options.username.toLowerCase()
-        });
+        // just a quick and dirty validation to check if user passes username or email.
+        const userExists = await ctx.em.findOne(
+            User,
+            userNameOrEmail.includes("@")
+                ? { email: userNameOrEmail }
+                : { username: userNameOrEmail }
+        );
 
         if (!userExists) {
             return {
                 errors: [
                     {
-                        field: "username",
+                        field: "userNameOrEmail",
                         message: "Invalid login"
                     }
                 ]
             };
         }
 
-        const valid = await argon2.verify(
-            userExists.password,
-            options.password
-        );
+        const valid = await argon2.verify(userExists.password, password);
 
         if (!valid) {
             return {

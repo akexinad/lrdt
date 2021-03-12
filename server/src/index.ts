@@ -1,13 +1,11 @@
-/**
- * package required for type graphql to work.
- */
 import { MikroORM } from "@mikro-orm/core";
 import { ApolloServer } from "apollo-server-express";
 import connectRedis from "connect-redis";
 import cors from "cors";
 import express from "express";
 import session from "express-session";
-import redis from "redis";
+import Redis from "ioredis";
+// Package required for type graphql to work.
 import "reflect-metadata";
 import { buildSchema } from "type-graphql";
 import { COOKIE_NAME, __prod__ } from "./constants";
@@ -18,6 +16,8 @@ import { PostResolver } from "./resolvers/post";
 import { UserResolver } from "./resolvers/user";
 
 const main = async () => {
+    // sendEmail("danixeka@gmail.com", "hello");
+
     const orm = await MikroORM.init(mikroOrmConfig);
 
     // automatically run the migrations
@@ -31,7 +31,9 @@ const main = async () => {
      * We need to access the session before the apollo server.
      */
     const RedisStore = connectRedis(session);
-    const redisClient = redis.createClient();
+    const redis = Redis();
+
+
 
     app.use(
         cors({
@@ -44,7 +46,7 @@ const main = async () => {
         session({
             name: COOKIE_NAME,
             store: new RedisStore({
-                client: redisClient,
+                client: redis,
                 disableTouch: true
             }),
             cookie: {
@@ -67,7 +69,8 @@ const main = async () => {
         context: ({ req, res }) => ({
             em: orm.em,
             req,
-            res
+            res,
+            redis
         })
     });
 

@@ -1,4 +1,4 @@
 export const initialFormValues = {
-    username: "",
+    userNameOrEmail: "",
     password: ""
 }

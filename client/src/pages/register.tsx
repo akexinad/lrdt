@@ -20,9 +20,13 @@ const Register: FC<RegisterProps> = () => {
     return (
         <Wrapper variant="small">
             <Formik
-                initialValues={initialFormValues}
+                initialValues={{
+                    username: "",
+                    email: "",
+                    password: ""
+                }}
                 onSubmit={async (values, { setErrors }) => {
-                    const response = await register(values);
+                    const response = await register({ options: values });
 
                     if (!response.data) {
                         return router.push("/404/no_data");
@@ -44,6 +48,13 @@ const Register: FC<RegisterProps> = () => {
                             placeholder="Username"
                             label="Username"
                         />
+                        <Box my="4">
+                            <InputField
+                                name="email"
+                                placeholder="Email"
+                                label="Email"
+                            />
+                        </Box>
                         <Box my="4">
                             <InputField
                                 name="password"

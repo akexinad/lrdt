@@ -1,4 +1,4 @@
-import { Box, Button } from "@chakra-ui/react";
+import { Box, Button, Flex, Link } from "@chakra-ui/react";
 import { Form, Formik } from "formik";
 import { withUrqlClient } from "next-urql";
 import router from "next/router";
@@ -10,6 +10,8 @@ import { createUrqlClient } from "../utils/createUrqlClient";
 import { initialFormValues } from "../utils/formUtils";
 import { toErrorMap } from "../utils/toErrorMap";
 
+import NextLink from "next/link";
+
 type LoginProps = {};
 
 const Login: FC<LoginProps> = () => {
@@ -20,7 +22,7 @@ const Login: FC<LoginProps> = () => {
             <Formik
                 initialValues={initialFormValues}
                 onSubmit={async (values, { setErrors }) => {
-                    const response = await login({ options: values });
+                    const response = await login(values);
 
                     if (!response.data) {
                         return router.push("/404/no_data");
@@ -38,9 +40,9 @@ const Login: FC<LoginProps> = () => {
                 {({ values, handleChange, isSubmitting }) => (
                     <Form>
                         <InputField
-                            name="username"
-                            placeholder="Username"
-                            label="Username"
+                            name="userNameOrEmail"
+                            placeholder="Username or Email"
+                            label="Username or Email"
                         />
                         <Box my="4">
                             <InputField
@@ -50,6 +52,11 @@ const Login: FC<LoginProps> = () => {
                                 type="password"
                             />
                         </Box>
+                        <Flex mb="4" textAlign="center">
+                            <NextLink href="/forgot-password">
+                                <Link ml="auto">Forgot Password?</Link>
+                            </NextLink>
+                        </Flex>
 
                         <Button
                             type="submit"
