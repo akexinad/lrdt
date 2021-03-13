@@ -3,11 +3,10 @@ import { Form, Formik } from "formik";
 import { withUrqlClient } from "next-urql";
 import { useRouter } from "next/router";
 import React, { FC } from "react";
-import { InputField } from "../components/InputField";
+import { InputOrTextArea } from "../components/InputField";
 import { Wrapper } from "../components/Wrapper";
 import { useRegisterMutation } from "../generated/graphql";
 import { createUrqlClient } from "../utils/createUrqlClient";
-import { initialFormValues } from "../utils/formUtils";
 import { toErrorMap } from "../utils/toErrorMap";
 
 type RegisterProps = {};
@@ -41,22 +40,22 @@ const Register: FC<RegisterProps> = () => {
                     router.push("/");
                 }}
             >
-                {({ values, handleChange, isSubmitting }) => (
+                {({ isSubmitting }) => (
                     <Form>
-                        <InputField
+                        <InputOrTextArea
                             name="username"
                             placeholder="Username"
                             label="Username"
                         />
                         <Box my="4">
-                            <InputField
+                            <InputOrTextArea
                                 name="email"
                                 placeholder="Email"
                                 label="Email"
                             />
                         </Box>
                         <Box my="4">
-                            <InputField
+                            <InputOrTextArea
                                 name="password"
                                 placeholder="Password"
                                 label="Password"

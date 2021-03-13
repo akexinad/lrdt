@@ -1,4 +1,4 @@
-import { Box, Button, Flex, Link } from "@chakra-ui/react";
+import { Box, Button, Flex, Link, PositionProps } from "@chakra-ui/react";
 import Router from "next/link";
 import React, { FC } from "react";
 import { useLogoutMutation, useMeQuery } from "../generated/graphql";
@@ -51,8 +51,14 @@ export const NavBar: FC<NavBarProps> = () => {
         );
     }
 
+    const fixNavBar: PositionProps = {
+        position: "sticky",
+        top: "0",
+        zIndex: "10"
+    };
+
     return (
-        <Flex bg={"tomato"} p="4">
+        <Flex {...fixNavBar} bg={"tomato"} p="4">
             <Box ml="auto">{body}</Box>
         </Flex>
     );

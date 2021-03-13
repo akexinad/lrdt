@@ -2,7 +2,7 @@ import { Box, Button } from "@chakra-ui/react";
 import { Form, Formik } from "formik";
 import { withUrqlClient } from "next-urql";
 import React, { FC, useState } from "react";
-import { InputField } from "../components/InputField";
+import { InputOrTextArea } from "../components/InputField";
 import { Wrapper } from "../components/Wrapper";
 import { useForgotPasswordMutation } from "../generated/graphql";
 import { createUrqlClient } from "../utils/createUrqlClient";
@@ -31,7 +31,7 @@ const ForgotPassword: FC<ForgotPasswordProps> = () => {
                 {({ isSubmitting }) => (
                     <Form>
                         <Box mb="4">
-                            <InputField
+                            <InputOrTextArea
                                 name="email"
                                 placeholder="Email"
                                 label="Email"

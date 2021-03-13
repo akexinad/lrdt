@@ -14,7 +14,7 @@ import {
 import { Post } from "../entites/Post";
 
 @InputType()
-class PostInput {
+class CreatePostOptions {
     @Field()
     title: string;
 
@@ -38,7 +38,7 @@ export class PostResolver {
     @Mutation(() => Post)
     @UseMiddleware(isAuth) // check if user is authenticated
     async createPost(
-        @Arg("options", () => PostInput) options: PostInput,
+        @Arg("options", () => CreatePostOptions) options: CreatePostOptions,
         @Ctx() ctx: MyContext
     ): Promise<Post> {
         return Post.create({

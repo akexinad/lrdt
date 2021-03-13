@@ -10,6 +10,21 @@ import {
 } from "../generated/graphql";
 import { betterUpdateQuery } from "./betterUpdateQuery";
 
+/*
+A way of handling authentication errors globally
+
+export const ErrorExchange: Exchange = ({ forward }) => (ops$) => {
+    return pipe(
+        forward(ops$),
+        tap(({ error }) => {
+            if (error?.message.includes("not authenticated")) {
+                Router.replace("/login");
+            }
+        })
+    );
+};
+*/
+
 export const createUrqlClient = (ssrExchange: SSRExchange) => ({
     url: "http://localhost:5000/graphql",
     fetchOptions: {
@@ -67,6 +82,7 @@ export const createUrqlClient = (ssrExchange: SSRExchange) => ({
                 }
             }
         }),
+        // errorExchange,
         ssrExchange,
         fetchExchange
     ]

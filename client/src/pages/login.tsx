@@ -3,7 +3,7 @@ import { Form, Formik } from "formik";
 import { withUrqlClient } from "next-urql";
 import router from "next/router";
 import React, { FC } from "react";
-import { InputField } from "../components/InputField";
+import { InputOrTextArea } from "../components/InputField";
 import { Wrapper } from "../components/Wrapper";
 import { useLoginMutation } from "../generated/graphql";
 import { createUrqlClient } from "../utils/createUrqlClient";
@@ -34,18 +34,24 @@ const Login: FC<LoginProps> = () => {
                         );
                     }
 
+                    const nextQuery = router.query.next;
+
+                    if (typeof nextQuery === "string") {
+                        return router.push(nextQuery);
+                    }
+
                     router.push("/");
                 }}
             >
-                {({ values, handleChange, isSubmitting }) => (
+                {({ isSubmitting }) => (
                     <Form>
-                        <InputField
+                        <InputOrTextArea
                             name="userNameOrEmail"
                             placeholder="Username or Email"
                             label="Username or Email"
                         />
                         <Box my="4">
-                            <InputField
+                            <InputOrTextArea
                                 name="password"
                                 placeholder="Password"
                                 label="Password"
