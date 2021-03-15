@@ -9,6 +9,7 @@ import {
     RegisterMutation
 } from "../generated/graphql";
 import { betterUpdateQuery } from "./betterUpdateQuery";
+import { isServer } from "./isServer";
 
 /*
 A way of handling authentication errors globally
@@ -25,6 +26,26 @@ export const errorExchange: Exchange = ({ forward }) => (ops$) => {
     };
 */
 
+type MyContext = {
+    req: Request & {
+        headers: {
+            cookie: string;
+        };
+    };
+};
+
+export const createUrqlClient = (ssrExchange: SSRExchange, ctx: MyContext) => {
+    let cookie = "";
+    if (isServer()) {
+        cookie = ctx.req.headers.cookie;
+    }
+
+    return {
+        url: "http://localhost:5000/graphql",
+        fetchOptions: {
+            credentials: "include" as const,
+            headers: cookie ? { cookie } : undefined
+        },
         exchanges: [
             dedupExchange,
             cacheExchange({
