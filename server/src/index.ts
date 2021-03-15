@@ -4,6 +4,7 @@ import cors from "cors";
 import express from "express";
 import session from "express-session";
 import Redis from "ioredis";
+import path from "path";
 import "reflect-metadata"; // Package required for type-graphql and type-orm to work.
 import { buildSchema } from "type-graphql";
 import { createConnection } from "typeorm";
@@ -23,8 +24,9 @@ const main = async () => {
         password: DB_PASS,
         logging: true,
         synchronize: true,
+        migrations: [path.join(__dirname, "./migrations/*")],
         entities: [Post, User]
-    });
+    }).then((con) => con.runMigrations());
 
     const app = express();
 
