@@ -111,8 +111,8 @@ export class UserResolver {
         if (!user) {
             /**
              * For security reasons, it's a good idea to return true
-             * to deter malicious fishing through your users for a
-             * vulnerable email.
+             * to deter malicious users fishing through your list of
+             * users for a vulnerable email.
              */
             return true;
         }
