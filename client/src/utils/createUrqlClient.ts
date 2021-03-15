@@ -13,16 +13,16 @@ import { betterUpdateQuery } from "./betterUpdateQuery";
 /*
 A way of handling authentication errors globally
 
-export const ErrorExchange: Exchange = ({ forward }) => (ops$) => {
+export const errorExchange: Exchange = ({ forward }) => (ops$) => {
     return pipe(
         forward(ops$),
-        tap(({ error }) => {
-            if (error?.message.includes("not authenticated")) {
-                Router.replace("/login");
-            }
-        })
-    );
-};
+            tap(({ error }) => {
+                if (error?.message.includes("not authenticated")) {
+                    Router.replace("/login");
+                }
+            })
+        );
+    };
 */
 
         exchanges: [
