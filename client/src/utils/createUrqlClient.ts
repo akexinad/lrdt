@@ -35,16 +35,11 @@ type MyContext = {
 };
 
 export const createUrqlClient = (ssrExchange: SSRExchange, ctx: MyContext) => {
-    let cookie = "";
-    if (isServer()) {
-        cookie = ctx.req.headers.cookie;
-    }
-
     return {
         url: "http://localhost:5000/graphql",
         fetchOptions: {
             credentials: "include" as const,
-            headers: cookie ? { cookie } : undefined
+            headers: isServer() ? { cookie: ctx.req.headers.cookie } : undefined
         },
         exchanges: [
             dedupExchange,
