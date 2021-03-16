@@ -3,10 +3,12 @@ import {
     Arg,
     Ctx,
     Field,
+    FieldResolver,
     Mutation,
     ObjectType,
     Query,
-    Resolver
+    Resolver,
+    Root
 } from "type-graphql";
 import { getConnection, InsertResult } from "typeorm";
 import { v4 } from "uuid";
@@ -35,8 +37,22 @@ class UserResponse {
     user?: User;
 }
 
-@Resolver()
+@Resolver(User)
 export class UserResolver {
+    /**
+     * Logged in users should not be able to see other people's emails.
+     * 
+     * The name of the field resolver needs to match the entity's property.
+     */
+    @FieldResolver(() => String)
+    email(@Root() user: User, @Ctx() ctx: MyContext) {
+        if (ctx.req.session.userId === user.id) {
+            return user.email;
+        }
+
+        return "";
+    }
+
     @Mutation(() => UserResponse)
     async changePassword(
         @Arg("token") token: string,
