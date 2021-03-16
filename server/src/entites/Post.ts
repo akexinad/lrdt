@@ -5,9 +5,11 @@ import {
     CreateDateColumn,
     Entity,
     ManyToOne,
+    OneToMany,
     PrimaryGeneratedColumn,
     UpdateDateColumn
 } from "typeorm";
+import { Upvote } from "./Upvote";
 import { User } from "./User";
 
 @ObjectType()
@@ -40,6 +42,10 @@ export class Post extends BaseEntity {
     @Field()
     @ManyToOne(() => User, (user) => user.posts)
     creator: User;
+
+    @Field(() => [Upvote], { nullable: true })
+    @OneToMany(() => Upvote, (upvote) => upvote.post)
+    upvotes: Upvote[];
 
     /**
      * If there's a column that you do not want to expose to graphql,

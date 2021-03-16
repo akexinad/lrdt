@@ -1,3 +1,4 @@
+import { Upvote } from "../entites/Upvote";
 import { MyContext } from "src/types";
 import {
     Arg,
@@ -44,6 +45,80 @@ export class PostResolver {
     @FieldResolver(() => String)
     textSnippet(@Root() root: Post) {
         return root.text.slice(0, 50) + "...";
+    }
+
+    @Mutation(() => Boolean)
+    @UseMiddleware(isAuth)
+    async vote(
+        @Arg("postId", () => Int) postId: number,
+        @Arg("value", () => Int) value: number,
+        @Ctx() ctx: MyContext
+    ) {
+        const { userId } = ctx.req.session;
+
+        if (value === 0) {
+            return false;
+        }
+        
+        // making sure user can only vote 1 or -1
+        const vote = value > 0 ? 1 : -1;
+
+        if (!userId) {
+            ctx.res.status(401);
+            throw new Error("Unauthorized");
+        }
+
+        const existingUpvoteByUser = await Upvote.findOne({
+            where: { userId, postId }
+        });
+
+        const postToUpvote = await Post.findOne({ id: postId });
+
+        if (!postToUpvote) {
+            ctx.res.send(500);
+            throw new Error("Post does not exist.");
+        }
+
+        // new vote
+        if (!existingUpvoteByUser) {
+            await Upvote.insert({
+                userId,
+                postId,
+                value: vote
+            });
+
+            await Post.update(
+                { id: postId },
+                { points: postToUpvote.points + vote }
+            );
+
+            return true;
+        }
+
+        // User wants to remove his vote.
+        if (existingUpvoteByUser.value === vote) {
+            await Upvote.delete({ userId, postId });
+            await Post.update(
+                { id: postId },
+                {
+                    points: postToUpvote.points - vote
+                }
+            );
+
+            return true;
+        }
+
+        // User wants to change his vote.
+        if (existingUpvoteByUser.value !== value) {
+            await Upvote.update({ userId, postId }, { value: value });
+            await Post.update(
+                { id: postId },
+                { points: postToUpvote.points + vote * 2 }
+            );
+            return true;
+        }
+
+        return true;
     }
 
     @Query(() => Post, { nullable: true })
