@@ -142,7 +142,14 @@ export class UserResolver {
 
         if (!userId) return undefined;
 
-        return User.findOne(userId);
+        return getConnection()
+            .getRepository(User)
+            .createQueryBuilder("user")
+            .innerJoinAndSelect("user.posts", "post")
+            .where("user.id = :id", { id: ctx.req.session.userId })
+            .getOne();
+
+        // return User.findOne(userId);
     }
 
     // REGISTER MUTATION

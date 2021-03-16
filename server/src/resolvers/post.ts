@@ -48,7 +48,12 @@ export class PostResolver {
 
     @Query(() => Post, { nullable: true })
     post(@Arg("id", () => Int) id: number): Promise<Post | undefined> {
-        return Post.findOne(id);
+        return getConnection()
+            .getRepository(Post)
+            .createQueryBuilder("post")
+            .innerJoinAndSelect("post.creator", "user")
+            .where("post.id = :id", { id })
+            .getOne();
     }
 
     @Query(() => PaginatedPosts)
@@ -63,11 +68,16 @@ export class PostResolver {
         const queryBuilder = getConnection()
             .getRepository(Post)
             .createQueryBuilder("post")
-            .orderBy('"createdAt"', "DESC") // PostgreSQL requires that you add double quotes
+            .innerJoinAndSelect("post.creator", "user")
+            /**
+             * When dealing with camelCased variables you might need to
+             * use double quotes when you using the variable independently.
+             */
+            .orderBy("post.createdAt", "DESC")
             .take(realLimitPlusOne);
 
         if (cursor) {
-            queryBuilder.where('"createdAt" < :cursor', {
+            queryBuilder.where("post.createdAt < :cursor", {
                 cursor: new Date(+cursor)
             });
         }
