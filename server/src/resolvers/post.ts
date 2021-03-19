@@ -75,7 +75,7 @@ export class PostResolver {
         const postToUpvote = await Post.findOne({ id: postId });
 
         if (!postToUpvote) {
-            ctx.res.send(500);
+            ctx.res.status(404).send("post not found");
             throw new Error("Post does not exist.");
         }
 
@@ -110,7 +110,7 @@ export class PostResolver {
 
         // User wants to change his vote.
         if (existingUpvoteByUser.value !== value) {
-            await Upvote.update({ userId, postId }, { value: value });
+            await Upvote.update({ userId, postId }, { value });
             await Post.update(
                 { id: postId },
                 { points: postToUpvote.points + vote * 2 }
