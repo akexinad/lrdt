@@ -1,20 +1,19 @@
 import { dedupExchange, fetchExchange, stringifyVariables } from "@urql/core";
 import { cacheExchange, Resolver } from "@urql/exchange-graphcache";
-import { NextUrqlContext, SSRExchange } from "next-urql";
 import gql from "graphql-tag";
+import { NextUrqlContext, SSRExchange } from "next-urql";
 import {
     LoginMutation,
     LogoutMutation,
     MeDocument,
     MeQuery,
     PostSnippetFragment,
-    PostsQuery,
     RegisterMutation,
     VoteMutationVariables
 } from "../generated/graphql";
 import { betterUpdateQuery } from "./betterUpdateQuery";
-import { isServer } from "./isServer";
 import { invalidateCache } from "./invalidateCache";
+import { isServer } from "./isServer";
 
 /*
 A way of handling authentication errors globally
