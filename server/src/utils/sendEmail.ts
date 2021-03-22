@@ -1,5 +1,4 @@
 import nodemailer from "nodemailer";
-import { NODEMAILER_PASS, NODEMAILER_USER } from "../priv";
 
 // async..await is not allowed in global scope, must use a wrapper
 export async function sendEmail(to: string, html: string) {
@@ -15,8 +14,8 @@ export async function sendEmail(to: string, html: string) {
         port: 587,
         secure: false, // true for 465, false for other ports
         auth: {
-            user: NODEMAILER_USER, // generated ethereal user
-            pass: NODEMAILER_PASS // generated ethereal password
+            user: process.env.NODEMAILER_USER, // generated ethereal user
+            pass: process.env.NODEMAILER_PASS // generated ethereal password
         }
     });
 

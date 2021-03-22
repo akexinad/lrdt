@@ -1,6 +1,7 @@
 import { ApolloServer } from "apollo-server-express";
 import connectRedis from "connect-redis";
 import cors from "cors";
+import env from "dotenv";
 import express from "express";
 import session from "express-session";
 import Redis from "ioredis";
@@ -12,19 +13,21 @@ import { COOKIE_NAME, __prod__ } from "./constants";
 import { Post } from "./entites/Post";
 import { Upvote } from "./entites/Upvote";
 import { User } from "./entites/User";
-import { DB_PASS, DB_USER, SESSION_COOKIE } from "./priv";
 import { HelloResolver } from "./resolvers/hello";
 import { PostResolver } from "./resolvers/post";
 import { UserResolver } from "./resolvers/user";
 
 const main = async () => {
+    env.config();
+
     await createConnection({
+        url: process.env.DB_URL,
         type: "postgres",
-        database: "lrdt",
-        username: DB_USER,
-        password: DB_PASS,
         logging: true,
         synchronize: true,
+        // ssl: {
+        //     rejectUnauthorized: false
+        // },
         migrations: [path.join(__dirname, "./migrations/*")],
         entities: [Post, User, Upvote]
     }).then((con) => con.runMigrations());
@@ -60,7 +63,7 @@ const main = async () => {
                 secure: __prod__ // cookie only works in https
             },
             saveUninitialized: false,
-            secret: SESSION_COOKIE,
+            secret: process.env.SESSION_SECRET,
             resave: false
         })
     );
@@ -87,8 +90,10 @@ const main = async () => {
         // cors: { origin: "http://localhost:3000" }
     });
 
-    app.listen(5000, () => {
-        console.log("listening on http://localhost:5000/graphql");
+    app.listen(process.env.PORT, () => {
+        console.log(
+            `listening on http://localhost:${process.env.PORT}/graphql`
+        );
     });
 };
 
