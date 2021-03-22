@@ -46,11 +46,9 @@ const CreatePost: FC<CreatePostProps> = () => {
 
                         if (response.error) {
                             setError(response.error.response.statusText);
-
-                            router.push("/");
                         }
 
-                        console.log("response", response);
+                        router.push("/");
                     }}
                 >
                     {({ isSubmitting }) => (
