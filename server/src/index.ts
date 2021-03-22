@@ -13,8 +13,8 @@ import { COOKIE_NAME, __prod__ } from "./constants";
 import { Post } from "./entites/Post";
 import { Upvote } from "./entites/Upvote";
 import { User } from "./entites/User";
-import { HelloResolver } from "./resolvers/hello";
 import { PostResolver } from "./resolvers/post";
+import { UpvoteResolver } from "./resolvers/upvote";
 import { UserResolver } from "./resolvers/user";
 
 const main = async () => {
@@ -70,7 +70,7 @@ const main = async () => {
 
     const apolloServer = new ApolloServer({
         schema: await buildSchema({
-            resolvers: [HelloResolver, PostResolver, UserResolver],
+            resolvers: [PostResolver, UserResolver, UpvoteResolver],
             validate: false
         }),
         context: ({ req, res }) => ({
