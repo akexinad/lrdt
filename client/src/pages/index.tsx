@@ -1,21 +1,17 @@
-import {
-    Box,
-    Button,
-    Flex,
-    Heading,
-    Link,
-    Stack,
-    Text
-} from "@chakra-ui/react";
+import { Box, Button, Flex, Heading, Link } from "@chakra-ui/react";
 import { withUrqlClient } from "next-urql";
 import NextLink from "next/link";
 import React, { useEffect, useState } from "react";
 import { Layout } from "../components/Layout";
+import { Posts } from "../components/Posts";
 import { useMeQuery, usePostsQuery } from "../generated/graphql";
 import { createUrqlClient } from "../utils/createUrqlClient";
 
 const Index = () => {
-    const [variables, setVariables] = useState<{limit: number, cursor: string | null}>({ limit: 10, cursor: null });
+    const [variables, setVariables] = useState<{
+        limit: number;
+        cursor: string | null;
+    }>({ limit: 15, cursor: null });
 
     const [{ data, fetching }] = usePostsQuery({
         variables
@@ -54,20 +50,7 @@ const Index = () => {
                 {!data && fetching ? (
                     <div>loading...</div>
                 ) : (
-                    <Stack spacing={8} mb="8">
-                        {data!.posts.posts.map((post) => (
-                            <Box
-                                key={post.id}
-                                p="5"
-                                shadow="md"
-                                borderWidth="1px"
-                                borderRadius="10px"
-                            >
-                                <Heading fontSize="xl">{post.title}</Heading>
-                                <Text mt="4">{post.textSnippet}</Text>
-                            </Box>
-                        ))}
-                    </Stack>
+                    <Posts data={data!} />
                 )}
                 {data && data.posts.hasMore ? (
                     <Flex>
@@ -76,10 +59,15 @@ const Index = () => {
                             m="auto"
                             my="8"
                             colorScheme="green"
-                            onClick={() => setVariables({
-                                limit: variables.limit,
-                                cursor: data.posts.posts[data.posts.posts.length - 1].createdAt // the last item
-                            })}
+                            onClick={() =>
+                                setVariables({
+                                    limit: variables.limit,
+                                    cursor:
+                                        data.posts.posts[
+                                            data.posts.posts.length - 1
+                                        ].createdAt // the last item
+                                })
+                            }
                         >
                             Load More
                         </Button>
