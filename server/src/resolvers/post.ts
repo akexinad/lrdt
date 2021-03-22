@@ -43,9 +43,9 @@ export class PostResolver {
      */
     @FieldResolver(() => String)
     textSnippet(@Root() root: Post) {
-        return root.text.slice(0, 50) + "...";
-    }
-
+        return root.text.length > 50
+            ? root.text.slice(0, 50) + "..."
+            : root.text;
     }
 
     @Query(() => Post, { nullable: true })
@@ -53,7 +53,8 @@ export class PostResolver {
         return getConnection()
             .getRepository(Post)
             .createQueryBuilder("post")
-            .innerJoinAndSelect("post.creator", "user")
+            .leftJoinAndSelect("post.creator", "user")
+            .leftJoinAndSelect("post.upvotes", "upvote")
             .where("post.id = :id", { id })
             .getOne();
     }
@@ -61,16 +62,18 @@ export class PostResolver {
     @Query(() => PaginatedPosts)
     async posts(
         @Arg("limit", () => Int) limit: number,
-        @Arg("cursor", () => String, { nullable: true }) cursor: string | null
+        @Arg("cursor", () => String, { nullable: true }) cursor: string | null,
+        @Ctx() ctx: MyContext
     ): Promise<PaginatedPosts> {
         const realLimit = Math.min(50, limit);
 
         const realLimitPlusOne = realLimit + 1;
 
         const queryBuilder = getConnection()
-            .getRepository(Post)
-            .createQueryBuilder("post")
-            .innerJoinAndSelect("post.creator", "user")
+            // .getRepository(Post)
+            .createQueryBuilder(Post, "post")
+            .leftJoinAndSelect("post.creator", "user")
+            .leftJoinAndSelect("post.upvotes", "upvote")
             /**
              * When dealing with camelCased variables you might need to
              * use double quotes when you using the variable independently.
@@ -84,11 +87,40 @@ export class PostResolver {
             });
         }
 
-        const posts = await queryBuilder.getMany();
-        const hasMore = posts.length === realLimitPlusOne;
+        /**
+         * Checking if the post has been updated by current user.
+         */
+        const userId = ctx.req.session.userId;
+        const postsCollection = await queryBuilder.getMany();
+
+        const hasMore = postsCollection.length === realLimitPlusOne;
+
+        /**
+         * No need to update the vote status since no user is logged in.
+         */
+        if (!userId) {
+            return {
+                posts: postsCollection,
+                hasMore
+            };
+        }
+
+        const postsWithVoteStatus = postsCollection.map((post) => {
+            const existingUpvote = post.upvotes.find(
+                (upvote) => upvote.userId === userId
+            );
+
+            if (!existingUpvote) {
+                post.voteStatus = null;
+                return post;
+            }
+
+            post.voteStatus = existingUpvote.value;
+            return post;
+        });
 
         return {
-            posts: posts.slice(0, realLimit),
+            posts: postsWithVoteStatus.slice(0, realLimit),
             hasMore
         };
     }

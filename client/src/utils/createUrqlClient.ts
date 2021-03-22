@@ -1,15 +1,20 @@
 import { dedupExchange, fetchExchange, stringifyVariables } from "@urql/core";
 import { cacheExchange, Resolver } from "@urql/exchange-graphcache";
-import { SSRExchange } from "next-urql";
+import { NextUrqlContext, SSRExchange } from "next-urql";
+import gql from "graphql-tag";
 import {
     LoginMutation,
     LogoutMutation,
     MeDocument,
     MeQuery,
-    RegisterMutation
+    PostSnippetFragment,
+    PostsQuery,
+    RegisterMutation,
+    VoteMutationVariables
 } from "../generated/graphql";
 import { betterUpdateQuery } from "./betterUpdateQuery";
 import { isServer } from "./isServer";
+import { invalidateCache } from "./invalidateCache";
 
 /*
 A way of handling authentication errors globally
@@ -26,20 +31,21 @@ export const errorExchange: Exchange = ({ forward }) => (ops$) => {
     };
 */
 
-type MyContext = {
-    req: Request & {
-        headers: {
-            cookie: string;
-        };
-    };
-};
-
-export const createUrqlClient = (ssrExchange: SSRExchange, ctx: MyContext) => {
+export const createUrqlClient = (
+    ssrExchange: SSRExchange,
+    ctx?: NextUrqlContext
+) => {
     return {
         url: "http://localhost:5000/graphql",
         fetchOptions: {
             credentials: "include" as const,
-            headers: isServer() ? { cookie: ctx.req.headers.cookie } : undefined
+            /**
+             * this is in reference to the next.js server, not the
+             * node.js back end server.
+             */
+            headers: isServer()
+                ? { cookie: ctx?.req.headers.cookie }
+                : undefined
         },
         exchanges: [
             dedupExchange,
@@ -54,6 +60,72 @@ export const createUrqlClient = (ssrExchange: SSRExchange, ctx: MyContext) => {
                 },
                 updates: {
                     Mutation: {
+                        vote: (_result, args, cache, _info) => {
+                            const {
+                                postId,
+                                value
+                            } = args as VoteMutationVariables;
+
+                            const postToUpdate = cache.readFragment(
+                                gql`
+                                    fragment _ on Post {
+                                        id
+                                        points
+                                        voteStatus
+                                    }
+                                `,
+                                { id: postId }
+                            ) as PostSnippetFragment;
+
+                            if (!postToUpdate) {
+                                return console.error("post not found");
+                            }
+
+                            const { voteStatus } = postToUpdate;
+
+                            const newVoteStatus =
+                                value === voteStatus ? null : value;
+
+                            let updatedPoints = postToUpdate.points;
+
+                            /**
+                             * Change the vote
+                             */
+                            if (voteStatus && voteStatus !== value) {
+                                updatedPoints += value * 2;
+                            }
+
+                            /**
+                             * new vote.
+                             */
+                            if (voteStatus === null) {
+                                updatedPoints += value;
+                            }
+
+                            /**
+                             * Remove existing vote
+                             */
+                            if (voteStatus === value) {
+                                updatedPoints -= value;
+                            }
+
+                            cache.writeFragment(
+                                gql`
+                                    fragment __ on Post {
+                                        points
+                                        voteStatus
+                                    }
+                                `,
+                                {
+                                    id: postId,
+                                    points: updatedPoints,
+                                    voteStatus: newVoteStatus
+                                }
+                            );
+                        },
+                        createPost: (_result, _args, cache, _info) => {
+                            invalidateCache(cache, "Query", "posts");
+                        },
                         login: (result, _, cache, __) => {
                             betterUpdateQuery<LoginMutation, MeQuery>(
                                 cache,
@@ -69,6 +141,8 @@ export const createUrqlClient = (ssrExchange: SSRExchange, ctx: MyContext) => {
                                     }
                                 }
                             );
+
+                            invalidateCache(cache, "Query", "posts");
                         },
                         register: (result, _, cache, __) => {
                             betterUpdateQuery<RegisterMutation, MeQuery>(
@@ -97,6 +171,8 @@ export const createUrqlClient = (ssrExchange: SSRExchange, ctx: MyContext) => {
                                     };
                                 }
                             );
+
+                            invalidateCache(cache, "Query", "posts");
                         }
                     }
                 }

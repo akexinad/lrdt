@@ -41,7 +41,7 @@ class UserResponse {
 export class UserResolver {
     /**
      * Logged in users should not be able to see other people's emails.
-     * 
+     *
      * The name of the field resolver needs to match the entity's property.
      */
     @FieldResolver(() => String)
@@ -297,5 +297,12 @@ export class UserResolver {
                 res(true);
             })
         );
+    }
+
+    @Query(() => [User])
+    async users(): Promise<User[]> {
+        const users = await User.find();
+
+        return users;
     }
 }
