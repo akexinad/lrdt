@@ -14,7 +14,6 @@ import {
 } from "type-graphql";
 import { getConnection } from "typeorm";
 import { Post } from "../entites/Post";
-import { Upvote } from "../entites/Upvote";
 import { isAuth } from "../middleware/isAuth";
 import { MyContext } from "../types/types";
 
@@ -166,7 +165,7 @@ export class PostResolver {
         /**
          * Upvotes are cascade deleted via a property added
          * to the post property decorator in the Upvote class.
-         * 
+         *
          * Just note that with cascade you will delete all the upvotes
          * belonging to that post.
          */
