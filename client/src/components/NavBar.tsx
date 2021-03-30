@@ -1,6 +1,7 @@
-import { Box, Button, Flex, Link, PositionProps } from "@chakra-ui/react";
+import { Box, Button, Flex, Icon, Link, PositionProps } from "@chakra-ui/react";
 import Router from "next/link";
 import React, { FC } from "react";
+import { MdHome } from "react-icons/md";
 import { useLogoutMutation, useMeQuery } from "../generated/graphql";
 
 type NavBarProps = {};
@@ -52,7 +53,20 @@ export const NavBar: FC<NavBarProps> = () => {
     };
 
     return (
-        <Flex {...fixNavBar} bg={"tomato"} p="4">
+        <Flex alignItems="center" {...fixNavBar} bg={"tomato"} p="4">
+            <Box>
+                <Router href="/">
+                    <Link>
+                        <Icon
+                            // as={HomeIcon}
+                            as={MdHome}
+                            h="8"
+                            w="8"
+                            _hover={{ color: "yellow", transition: "0.2s" }}
+                        />
+                    </Link>
+                </Router>
+            </Box>
             <Box ml="auto">{body}</Box>
         </Flex>
     );
