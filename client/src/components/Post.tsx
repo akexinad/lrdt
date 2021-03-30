@@ -11,20 +11,7 @@ type PostProps = {
 export const Post: FC<PostProps> = ({ post }) => {
     const [{ data }] = useMeQuery();
 
-    
-    useEffect(() => {
-        // if (!post.upvotes) return;
-        if (!data) return;
-        if (!data.me) return;
-
-        // console.log(`post`, post)
-        // console.log(`data`, data)
-        
-        // const upvoted = post.upvotes.find(upvote => upvote.userId === data?.me?.id)
-
-        
-    }, [post, data])
-
+    const [, deletePost] = useDeletePostMutation();
 
     return (
         <Flex
