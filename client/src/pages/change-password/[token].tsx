@@ -12,8 +12,8 @@ import { toErrorMap } from "../../utils/toErrorMap";
 
 /**
  * PLEASE NOTE:
- * 
- * The file name is important here as this tells Next.js what the 
+ *
+ * The file name is important here as this tells Next.js what the
  * name of the query parameter should be.
  */
 
