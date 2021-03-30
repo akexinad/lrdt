@@ -1,7 +1,7 @@
 import { Box, Button, Flex, Heading, Link } from "@chakra-ui/react";
 import { withUrqlClient } from "next-urql";
 import NextLink from "next/link";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { Layout } from "../components/Layout";
 import { Posts } from "../components/Posts";
 import { useMeQuery, usePostsQuery } from "../generated/graphql";
@@ -19,14 +19,6 @@ const Index = () => {
 
     const [{ data: meData }] = useMeQuery();
 
-    const [isAuth, setIsAuth] = useState(false);
-
-    useEffect(() => {
-        if (meData && meData.me) {
-            setIsAuth(true);
-        }
-    }, [meData]);
-
     if (!fetching && !data) {
         return <Box color="red">Query Failed</Box>;
     }
@@ -36,7 +28,7 @@ const Index = () => {
             <Layout>
                 <Flex justifyContent="space-between" align="center">
                     <Heading>lRdt</Heading>
-                    {isAuth ? (
+                    {meData && meData.me ? (
                         <Box>
                             <NextLink href="/create-post">
                                 <Link>Create Post</Link>
