@@ -286,6 +286,26 @@ export type MeQuery = (
   )> }
 );
 
+export type PostQueryVariables = Exact<{
+  id: Scalars['Int'];
+}>;
+
+
+export type PostQuery = (
+  { __typename?: 'Query' }
+  & { post?: Maybe<(
+    { __typename?: 'Post' }
+    & Pick<Post, 'id' | 'updatedAt' | 'createdAt' | 'points' | 'title' | 'text'>
+    & { creator: (
+      { __typename?: 'User' }
+      & Pick<User, 'id' | 'username'>
+    ), upvotes?: Maybe<Array<(
+      { __typename?: 'Upvote' }
+      & Pick<Upvote, 'value'>
+    )>> }
+  )> }
+);
+
 export type PostsQueryVariables = Exact<{
   limit: Scalars['Int'];
   cursor?: Maybe<Scalars['String']>;
@@ -430,6 +450,29 @@ export const MeDocument = gql`
 
 export function useMeQuery(options: Omit<Urql.UseQueryArgs<MeQueryVariables>, 'query'> = {}) {
   return Urql.useQuery<MeQuery>({ query: MeDocument, ...options });
+};
+export const PostDocument = gql`
+    query Post($id: Int!) {
+  post(id: $id) {
+    id
+    updatedAt
+    createdAt
+    points
+    title
+    text
+    creator {
+      id
+      username
+    }
+    upvotes {
+      value
+    }
+  }
+}
+    `;
+
+export function usePostQuery(options: Omit<Urql.UseQueryArgs<PostQueryVariables>, 'query'> = {}) {
+  return Urql.useQuery<PostQuery>({ query: PostDocument, ...options });
 };
 export const PostsDocument = gql`
     query Posts($limit: Int!, $cursor: String) {
