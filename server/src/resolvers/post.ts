@@ -14,6 +14,7 @@ import {
 } from "type-graphql";
 import { getConnection } from "typeorm";
 import { Post } from "../entites/Post";
+import { Upvote } from "../entites/Upvote";
 import { isAuth } from "../middleware/isAuth";
 import { MyContext } from "../types/types";
 
@@ -70,7 +71,6 @@ export class PostResolver {
         const realLimitPlusOne = realLimit + 1;
 
         const queryBuilder = getConnection()
-            // .getRepository(Post)
             .createQueryBuilder(Post, "post")
             .leftJoinAndSelect("post.creator", "user")
             .leftJoinAndSelect("post.upvotes", "upvote")
@@ -156,8 +156,22 @@ export class PostResolver {
     }
 
     @Mutation(() => Boolean)
-    async deletePost(@Arg("id") id: number): Promise<boolean> {
-        await Post.delete(id);
+    @UseMiddleware(isAuth) // check if user is authenticated
+    async deletePost(
+        @Arg("id", () => Int) id: number,
+        @Ctx() ctx: MyContext
+    ): Promise<boolean> {
+        const { userId } = ctx.req.session;
+
+        /**
+         * Upvotes are cascade deleted via a property added
+         * to the post property decorator in the Upvote class.
+         * 
+         * Just note that with cascade you will delete all the upvotes
+         * belonging to that post.
+         */
+
+        await Post.delete({ id, creatorId: userId });
 
         return true;
     }

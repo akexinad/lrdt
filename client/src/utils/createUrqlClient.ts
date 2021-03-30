@@ -3,6 +3,7 @@ import { cacheExchange, Resolver } from "@urql/exchange-graphcache";
 import gql from "graphql-tag";
 import { NextUrqlContext, SSRExchange } from "next-urql";
 import {
+    DeletePostMutationVariables,
     LoginMutation,
     LogoutMutation,
     MeDocument,
@@ -59,6 +60,12 @@ export const createUrqlClient = (
                 },
                 updates: {
                     Mutation: {
+                        deletePost: (_result, args, cache, _info) => {
+                            cache.invalidate({
+                                __typename: "Post",
+                                id: (args as DeletePostMutationVariables).id
+                            });
+                        },
                         vote: (_result, args, cache, _info) => {
                             const {
                                 postId,
