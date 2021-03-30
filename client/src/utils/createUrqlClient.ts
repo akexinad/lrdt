@@ -159,7 +159,7 @@ export const createUrqlClient = (
                                 }
                             );
                         },
-                        logout: (result, _, cache, __) => {
+                        logout: (result, _args, cache, _info) => {
                             betterUpdateQuery<LogoutMutation, MeQuery>(
                                 cache,
                                 { query: MeDocument },
