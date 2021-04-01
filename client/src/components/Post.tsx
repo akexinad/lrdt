@@ -1,8 +1,9 @@
-import { DeleteIcon } from "@chakra-ui/icons";
+import { DeleteIcon, EditIcon } from "@chakra-ui/icons";
 import { Box, Flex, Heading, IconButton, Link, Text } from "@chakra-ui/react";
 import { capitalize } from "lodash";
 import { withUrqlClient } from "next-urql";
 import NextLink from "next/link";
+import { useRouter } from "next/router";
 import React, { FC } from "react";
 import {
     PostSnippetFragment,
@@ -17,6 +18,8 @@ type PostProps = {
 };
 
 const Post: FC<PostProps> = ({ post }) => {
+    const router = useRouter();
+
     const [{ data }] = useMeQuery();
 
     const [, deletePost] = useDeletePostMutation();
@@ -43,20 +46,43 @@ const Post: FC<PostProps> = ({ post }) => {
                     <Text mt="4">{post.textSnippet}</Text>
 
                     {data && data.me && data.me.id === post.creatorId ? (
-                        <IconButton
-                            icon={
-                                <DeleteIcon
-                                    _hover={{
-                                        color: "tomato",
-                                        transition: "0.2s"
-                                    }}
-                                    h="6"
-                                    w="6"
+                        <Flex>
+                            <NextLink
+                                href={"/post/edit/[id]"}
+                                as={`/post/edit/${post.id}`}
+                            >
+                                <IconButton
+                                    icon={
+                                        <EditIcon
+                                            _hover={{
+                                                color: "lightgreen",
+                                                transition: "0.2s"
+                                            }}
+                                            h="6"
+                                            w="6"
+                                        />
+                                    }
+                                    aria-label="delete post"
+                                    onClick={() =>
+                                        router.push(`/post/edit/${post.id}`)
+                                    }
                                 />
-                            }
-                            aria-label="delete post"
-                            onClick={() => deletePost({ id: post.id })}
-                        />
+                            </NextLink>
+                            <IconButton
+                                icon={
+                                    <DeleteIcon
+                                        _hover={{
+                                            color: "tomato",
+                                            transition: "0.2s"
+                                        }}
+                                        h="6"
+                                        w="6"
+                                    />
+                                }
+                                aria-label="delete post"
+                                onClick={() => deletePost({ id: post.id })}
+                            />
+                        </Flex>
                     ) : null}
                 </Flex>
             </Box>
