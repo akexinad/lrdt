@@ -3,7 +3,6 @@ import {
     Ctx,
     Field,
     FieldResolver,
-    InputType,
     Int,
     Mutation,
     ObjectType,
@@ -16,15 +15,7 @@ import { getConnection } from "typeorm";
 import { Post } from "../entites/Post";
 import { isAuth } from "../middleware/isAuth";
 import { MyContext } from "../types/types";
-
-@InputType()
-class CreatePostOptions {
-    @Field()
-    title: string;
-
-    @Field()
-    text: string;
-}
+import { CreatePostOptions, UpdatePostInput } from "./inputTypes";
 
 @ObjectType()
 class PaginatedPosts {
